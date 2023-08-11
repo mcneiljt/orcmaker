@@ -1,4 +1,4 @@
-package com.example.orcmaker.orcer;
+package com.mcneilio.orcmaker.orcer;
 
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 

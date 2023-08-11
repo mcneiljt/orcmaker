@@ -1,12 +1,11 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.utils.Helpers;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.json.JSONArray;
-
-import static com.example.orcmaker.utils.Helpers.bytesForObject;
 
 public class ArrayStringOrcer implements Orcer {
 
@@ -25,7 +24,7 @@ public class ArrayStringOrcer implements Orcer {
                     byte[][] bytes = new byte[msgArray.length()][];
                     long total=0;
                     for(int i=0; i<msgArray.length(); i++) {
-                        bytes[i] = bytesForObject(msgArray.get(i));
+                        bytes[i] = Helpers.bytesForObject(msgArray.get(i));
                         total+=bytes[i].length;
                     }
                     int offset = timestampColumnVector.childCount;
@@ -39,7 +38,7 @@ public class ArrayStringOrcer implements Orcer {
                     timestampColumnVector.isNull[columnIndex] = false;
 
                 }else  {
-                    byte[] bytes = bytesForObject(obj);
+                    byte[] bytes = Helpers.bytesForObject(obj);
                     int offset = timestampColumnVector.childCount;
 
 

@@ -1,6 +1,6 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 

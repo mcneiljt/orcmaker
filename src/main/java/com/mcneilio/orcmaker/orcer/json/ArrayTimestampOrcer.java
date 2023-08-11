@@ -1,14 +1,13 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.utils.Helpers;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.json.JSONArray;
 
 import java.math.BigDecimal;
-
-import static com.example.orcmaker.utils.Helpers.hasCommonType;
 
 public class ArrayTimestampOrcer implements Orcer {
 
@@ -46,7 +45,7 @@ public class ArrayTimestampOrcer implements Orcer {
                         ((TimestampColumnVector)((ListColumnVector) columnVector).child).time[offset]=((Long) obj);
 
                     }else if(obj instanceof JSONArray) {
-                        if(hasCommonType((JSONArray) obj, (a) -> a instanceof Long)){
+                        if(Helpers.hasCommonType((JSONArray) obj, (a) -> a instanceof Long)){
                             JSONArray msgArray = (JSONArray) obj;
                             int offset = timestampListColumnVector.childCount;
                             timestampListColumnVector.offsets[columnIndex] = offset;

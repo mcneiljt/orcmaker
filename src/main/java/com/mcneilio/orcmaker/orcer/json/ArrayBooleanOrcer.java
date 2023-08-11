@@ -1,14 +1,13 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.utils.Helpers;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ListColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.json.JSONArray;
 
 import java.math.BigDecimal;
-
-import static com.example.orcmaker.utils.Helpers.hasCommonType;
 
 public class ArrayBooleanOrcer implements Orcer {
 
@@ -33,7 +32,7 @@ public class ArrayBooleanOrcer implements Orcer {
                 booleanListColumnVector.child.ensureSize(booleanListColumnVector.childCount, true);
                 ((LongColumnVector) booleanListColumnVector.child).vector[offset]= (Boolean)obj ? 1 : 0;
             } else if(obj instanceof JSONArray) {
-                if(hasCommonType((JSONArray) obj, (a) -> a instanceof Boolean)){
+                if(Helpers.hasCommonType((JSONArray) obj, (a) -> a instanceof Boolean)){
                     JSONArray msgArray = (JSONArray) obj;
                     int offset = booleanListColumnVector.childCount;
                     booleanListColumnVector.offsets[columnIndex] = offset;

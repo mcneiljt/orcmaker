@@ -1,8 +1,12 @@
-package com.mcneilio.shokuyoku.driver;
+package com.mcneilio.orcmaker;
 
-import com.example.orcmaker.EventDriver;
-import com.example.orcmaker.orcer.Orcer;
-import com.example.orcmaker.orcer.json.*;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.json.*;
+import com.mcneilio.orcmaker.storage.LocalStorageDriver;
+import com.mcneilio.orcmaker.storage.S3StorageDriver;
+import com.mcneilio.orcmaker.storage.StorageDriver;
+import com.mcneilio.orcmaker.utils.Statsd;
+import com.timgroup.statsd.StatsDClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.*;
@@ -18,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 
 /**
@@ -25,38 +30,78 @@ import java.util.UUID;
  * is reached, the ORC file is sent to the storageDriver.
  */
 public class BasicEventDriver implements EventDriver {
+    /**
+     * Initializes an EventDriver designed to take JSONObjects and add them to an ORC file.
+     * Available properties for the config:
+     * <ul>
+     *     <li>event.name - Name of the event</li>
+     *     <li>event.date - Date of the event</li>
+     *     <li>orcBatchSize - Size of the ORC batch</li>
+     *     <li>storage.driver - Type of storage driver to use (s3 or local)</li>
+     *     <li>storage.s3.bucket - Bucket to use for S3 storage driver</li>
+     *     <li>storage.s3.prefix - Prefix to use for S3 storage driver</li>
+     *     <li>storage.s3.region - Region to use for S3 storage driver</li>
+     *     <li>storage.local.path - Path to use for local storage driver</li>
+     *     <li>statsd.prefix - Prefix to use for statsd</li>
+     *     <li>statsd.host - Host to use for statsd</li>
+     *     <li>statsd.port - Port to use for statsd</li>
+     *     <li>statsd.flushMS - Flush interval to use for statsd</li>
+     *     <li>statsd.env - Environment to use for statsd</li>
+     * </ul>
+     *
+     * @param config         Configuration properties
+     * @param typeDescription TypeDescription of the ORC file
+     */
+    public BasicEventDriver(Properties config, TypeDescription typeDescription) {
+        this.eventName = config.getProperty("event.name");
+        this.date = config.getProperty("event.date");
+        this.statsdEnv = config.getProperty("statsd.env");
 
-    private interface JSONToOrc {
-        void addObject(ColumnVector columnVector, int idx, Object obj);
-    }
+        // Initialize storage driver
+        String storageDriverType = config.getProperty("storage.driver");
+        if (storageDriverType.equals("s3")) {
+            this.storageDriver = new S3StorageDriver(config);
+        } else if (storageDriverType.equals("local")) {
+            this.storageDriver = new LocalStorageDriver(config);
+        } else {
+            throw new RuntimeException("Unknown storage driver type: " + storageDriverType);
+        }
 
-    public BasicEventDriver(String eventName, String date, TypeDescription typeDescription, StorageDriver storageDriver) {
-        this.eventName = eventName;
-        this.date = date;
-        this.storageDriver = storageDriver;
+        // Initialize batch
         this.schema = typeDescription;
+        this.batch = this.schema.createRowBatch(Integer.parseInt(config.getProperty("orcBatchSize", "1000")));
 
-        // TODO This env vars should probably be pulled out.
-        this.batch = this.schema.createRowBatch(System.getenv("ORC_BATCH_SIZE") != null ? Integer.parseInt(System.getenv("ORC_BATCH_SIZE")) : 1000);
+        // Initialize columns
         setColumns();
         nullColumns();
+
+        // Initialize statsd
+        if (config.getProperty("statsd.prefix") == null || config.getProperty("statsd.host") == null || config.getProperty("statsd.port") == null)
+            throw new RuntimeException("Missing statsd configuration");
+        Statsd.createInstance(config.getProperty("statsd.prefix"), config.getProperty("statsd.host"), Integer.parseInt(config.getProperty("statsd.port")),
+                Integer.parseInt(config.getProperty("statsd.flushMS", "1000")));
         this.statsd = Statsd.getInstance();
     }
 
+
     private Orcer[] orcers;
 
+    /**
+     * Adds a JSONObject to the ORC batch. If batch size is reached, the batch is written to the ORC file.
+     * Assumes date is a column of the ORC file and is set to the date of processing.
+     */
     @Override
-    public void addMessage(JSONObject msg2) {
+    public void addMessage(JSONObject message) {
         long t = Instant.now().toEpochMilli();
         int batchPosition = batch.size++;
 
         for(int colId =0;colId<colNames.length;colId++){
             String key=colNames[colId];
 
-            if(!msg2.has(key)) {
+            if(!message.has(key)) {
                 continue;
             }
-            Object value = msg2.get(key);
+            Object value = message.get(key);
 
             if(orcers[colId]!=null){
                 orcers[colId].addObject(columnVectors[colId], batchPosition, value);
@@ -64,12 +109,12 @@ public class BasicEventDriver implements EventDriver {
         }
         ((LongColumnVector) columns.get("date")).vector[batchPosition] = LocalDate.parse(date).toEpochDay();
         columns.get("date").isNull[batchPosition] = false;
-        statsd.count("message.count", 1, new String[]{"env:"+System.getenv("STATSD_ENV")});
+        statsd.count("message.count", 1, new String[]{"env:"+ statsdEnv});
         if (batch.size == batch.getMaxSize()) {
             write();
         }
         statsd.histogram("eventDriver.addMessage.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+System.getenv("STATSD_ENV")});
+                new String[] {"env:"+statsdEnv});
     }
 
     @Override
@@ -98,7 +143,7 @@ public class BasicEventDriver implements EventDriver {
             }
         }
         statsd.histogram("eventDriver.flush.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+System.getenv("STATSD_ENV")});
+                new String[] {"env:"+statsdEnv});
         return writtenFileName;
     }
 
@@ -120,7 +165,7 @@ public class BasicEventDriver implements EventDriver {
         }
 
         statsd.histogram("eventDriver.write.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+System.getenv("STATSD_ENV")});
+                new String[] {"env:"+statsdEnv});
     }
 
     private void nullColumns() {
@@ -205,18 +250,15 @@ public class BasicEventDriver implements EventDriver {
         this.columns = columns;
     }
 
-    public String getFileName(){
-        return fileName;
-    }
-
     String[] colNames;
     VectorizedRowBatch batch;
     TypeDescription schema;
     HashMap<String, ColumnVector> columns;
-    String eventName, fileName, date;
+    String eventName, date, statsdEnv, fileName;
     Configuration conf = new Configuration();
     Writer writer = null;
     StatsDClient statsd;
     StorageDriver storageDriver;
     ColumnVector[] columnVectors;
+    Properties props;
 }

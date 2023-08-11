@@ -1,4 +1,4 @@
-package com.mcneilio.orcmaker;
+package com.mcneilio.orcmaker.storage;
 import java.nio.file.Path;
 
 public interface StorageDriver {

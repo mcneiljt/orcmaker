@@ -1,4 +1,4 @@
-package com.example.orcmaker;
+package com.mcneilio.orcmaker;
 
 import org.json.JSONObject;
 

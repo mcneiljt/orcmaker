@@ -1,6 +1,7 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.utils.Helpers;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
@@ -9,8 +10,6 @@ import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.json.JSONArray;
 
 import java.math.BigDecimal;
-
-import static com.example.orcmaker.utils.Helpers.hasCommonType;
 
 public class ArrayDecimalOrcer implements Orcer {
 
@@ -50,7 +49,7 @@ public class ArrayDecimalOrcer implements Orcer {
                     timestampColumnVector.childCount += 1;
                     ((DecimalColumnVector)((ListColumnVector) columnVector).child).vector[offset]= new HiveDecimalWritable(HiveDecimal.create((Long)obj));
                 } else if(obj instanceof JSONArray) {
-                    if(hasCommonType((JSONArray) obj, (a) -> a instanceof Integer || a instanceof Long || a instanceof BigDecimal)){
+                    if(Helpers.hasCommonType((JSONArray) obj, (a) -> a instanceof Integer || a instanceof Long || a instanceof BigDecimal)){
                         JSONArray msgArray = (JSONArray) obj;
                         int offset = timestampColumnVector.childCount;
                         timestampColumnVector.offsets[columnIndex] = offset;

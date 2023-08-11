@@ -1,10 +1,9 @@
-package com.example.orcmaker.orcer.json;
+package com.mcneilio.orcmaker.orcer.json;
 
-import com.example.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.orcer.Orcer;
+import com.mcneilio.orcmaker.utils.Helpers;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
-
-import static com.example.orcmaker.utils.Helpers.bytesForObject;
 
 public class StringOrcer implements Orcer {
 
@@ -17,7 +16,7 @@ public class StringOrcer implements Orcer {
         @Override
         public void addObject(ColumnVector columnVector, int columnIndex, Object obj) {
             BytesColumnVector bytesColumnVector = (BytesColumnVector) columnVector;
-            byte[] bytes= bytesForObject(obj);//null;
+            byte[] bytes= Helpers.bytesForObject(obj);//null;
 
             bytesColumnVector.setRef(columnIndex, bytes, 0,bytes.length);
             bytesColumnVector.isNull[columnIndex]=false;
