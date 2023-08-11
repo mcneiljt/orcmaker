@@ -1,12 +1,37 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
-
-group = 'com.example'
-version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.mcneilio'
+            artifactId = 'orcmaker'
+            version = '1.0.0'
+            from components.java
+
+            pom {
+                name = "OrcMaker"
+                description = "A library for building orc files"
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "OSSRH"
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = System.getenv("OSSRH_UN")
+                password = System.getenv("OSSRH_PW")
+            }
+        }
+    }
 }
 
 dependencies {
