@@ -41,5 +41,7 @@ jobs:
       with:
         arguments: publish
       env:
+        GPG_KEY: ${{ secrets.GPG_KEY }}
+        GPG_PW: ${{ secrets.GPG_PW }}
         OSSRH_UN: ${{ secrets.OSSRH_UN }}
         OSSRH_PW: ${{ secrets.OSSRH_PW }}
