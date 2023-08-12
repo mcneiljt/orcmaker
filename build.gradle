@@ -10,11 +10,52 @@ repositories {
 
 group 'com.mcneilio'
 archivesBaseName = 'orcmaker'
-version = '1.0.0'
+version = '0.0.1-SNAPSHOT'
 
 signing {
-    useInMemoryPgpKeys(System.getenv("GPG_KEY"), System.getenv("GPG_PW"))
+    def signingKey = base64Decode(System.getenv("GPG_KEY"))
+    def signingPassword = System.getenv("GPG_PW")
+    useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications
+}
+
+def base64Decode(encodedString){
+    if(encodedString != null) {
+        byte[] decoded = encodedString.decodeBase64()
+        String decode = new String(decoded)
+        return decode
+    }
+    return null;
+}
+
+tasks.register('createProperties') {
+    doLast {
+        def properties = new Properties()
+        properties.setProperty('version', version)
+        properties.store(new FileOutputStream(file('version.properties')), null)
+    }
+}
+
+classes {
+    dependsOn 'createProperties'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': 'OrcMaker',
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'Josh McNeil',
+                'Main-Class': 'com.mcneilio.orcmaker.Main',
+                'Class-Path': 'com.mcneilio.orcmaker',
+                'Build-Jdk': org.gradle.internal.jvm.Jvm.current(),
+                'Gradle-Version': GradleVersion.current().toString()
+        )
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//        from {
+//            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+//        }
+    }
 }
 
 java {

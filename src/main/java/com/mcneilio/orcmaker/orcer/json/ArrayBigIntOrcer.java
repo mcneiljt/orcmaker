@@ -9,10 +9,18 @@ import org.json.JSONArray;
 
 import java.math.BigDecimal;
 
+/**
+ * Adds a JSON array of bigints to a column vector
+ */
 public class ArrayBigIntOrcer implements Orcer {
 
     private static ArrayBigIntOrcer instance = null;
 
+    /**
+     * Get the singleton instance
+     *
+     * @return the singleton instance
+     */
     public static ArrayBigIntOrcer getInstance() {
         if (instance == null) {
             instance = new ArrayBigIntOrcer();
