@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'signing'
     id 'maven-publish'
 }
 
@@ -7,17 +8,47 @@ repositories {
     mavenCentral()
 }
 
+group 'com.mcneilio'
+archivesBaseName = 'orcmaker'
+version = '1.0.0'
+
+signing {
+    useInMemoryPgpKeys(System.getenv("GPG_KEY"), System.getenv("GPG_PW"))
+    sign publishing.publications
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'com.mcneilio'
-            artifactId = 'orcmaker'
-            version = '1.0.0'
             from components.java
 
             pom {
                 name = "OrcMaker"
                 description = "A library for building orc files"
+                url = 'https://github.com/mcneiljt/orcmaker'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mcneiljt'
+                        name = 'Josh McNeil'
+                        email = 'josh@mcneilio.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/mcneiljt/orcmaker.git'
+                    developerConnection = 'scm:git:ssh://github.com:mcneiljt/orcmaker.git'
+                    url = 'https://github.com/mcneiljt/orcmaker'
+                }
             }
         }
     }
@@ -25,11 +56,13 @@ publishing {
     repositories {
         maven {
             name = "OSSRH"
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
             credentials {
                 username = System.getenv("OSSRH_UN")
                 password = System.getenv("OSSRH_PW")
             }
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
         }
     }
 }
@@ -43,6 +76,11 @@ dependencies {
     implementation 'com.datadoghq:java-dogstatsd-client:4.0.0'
     implementation platform('software.amazon.awssdk:bom:2.20.56')
     implementation 'software.amazon.awssdk:s3'
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
 }
 
 test {
