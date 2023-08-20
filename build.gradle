@@ -52,9 +52,6 @@ jar {
                 'Gradle-Version': GradleVersion.current().toString()
         )
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//        from {
-//            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-//        }
     }
 }
 
