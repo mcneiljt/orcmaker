@@ -86,6 +86,10 @@ public class BasicEventDriver implements EventDriver {
 
     private Orcer[] orcers;
 
+    /**
+     * Adds a stringified JSONObject to the ORC batch. If batch size is reached, the batch is written to the ORC file.
+     * Assumes date is a column of the ORC file and is set to the date of processing.
+     */
     public void addMessage(String message) {
         addMessage(new JSONObject(message));
     }
