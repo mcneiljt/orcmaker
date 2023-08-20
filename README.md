@@ -3,6 +3,7 @@ A library for creating Orc files from buffered JSON input.
 
 ## Assumptions
 Add message assumes JSON input.
+
 S3 uses the date as a partition key when writing.
 
 ## Usage
