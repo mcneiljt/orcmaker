@@ -260,5 +260,4 @@ public class BasicEventDriver implements EventDriver {
     StatsDClient statsd;
     StorageDriver storageDriver;
     ColumnVector[] columnVectors;
-    Properties props;
 }
