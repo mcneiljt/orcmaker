@@ -10,11 +10,11 @@ repositories {
 
 group 'com.mcneilio'
 archivesBaseName = 'orcmaker'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 
 signing {
     def signingKey = base64Decode(System.getenv("GPG_KEY"))
-    def signingPassword = System.getenv("GPG_PW")
+    def signingPassword = base64Decode(System.getenv("GPG_PW"))
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications
 }
