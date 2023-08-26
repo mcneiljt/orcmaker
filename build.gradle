@@ -13,19 +13,10 @@ archivesBaseName = 'orcmaker'
 version = '1.0.0'
 
 signing {
-    def signingKey = base64Decode(System.getenv("GPG_KEY"))
-    def signingPassword = base64Decode(System.getenv("GPG_PW"))
+    def signingKey = System.getenv("GPG_KEY")
+    def signingPassword = System.getenv("GPG_PW")
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications
-}
-
-def base64Decode(encodedString){
-    if(encodedString != null) {
-        byte[] decoded = encodedString.decodeBase64()
-        String decode = new String(decoded)
-        return decode
-    }
-    return null;
 }
 
 tasks.register('createProperties') {
