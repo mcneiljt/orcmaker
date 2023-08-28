@@ -42,6 +42,7 @@ public class BasicEventDriver implements EventDriver {
      *     <li>storage.s3.prefix - Prefix to use for S3 storage driver</li>
      *     <li>storage.s3.region - Region to use for S3 storage driver</li>
      *     <li>storage.local.path - Path to use for local storage driver</li>
+     *     <li>statsd.enable - default true</li>
      *     <li>statsd.prefix - Prefix to use for statsd</li>
      *     <li>statsd.host - Host to use for statsd</li>
      *     <li>statsd.port - Port to use for statsd</li>
@@ -75,12 +76,15 @@ public class BasicEventDriver implements EventDriver {
         setColumns();
         nullColumns();
 
-        // Initialize statsd
-        if (config.getProperty("statsd.prefix") == null || config.getProperty("statsd.host") == null || config.getProperty("statsd.port") == null)
-            throw new RuntimeException("Missing statsd configuration");
-        Statsd.createInstance(config.getProperty("statsd.prefix"), config.getProperty("statsd.host"), Integer.parseInt(config.getProperty("statsd.port")),
-                Integer.parseInt(config.getProperty("statsd.flushMS", "1000")));
-        this.statsd = Statsd.getInstance();
+        this.statsdEnabled = config.getProperty("statsd.enabled", "true").equals("true");
+        if(this.statsdEnabled) {
+            // Initialize statsd
+            if (config.getProperty("statsd.prefix") == null || config.getProperty("statsd.host") == null || config.getProperty("statsd.port") == null)
+                throw new RuntimeException("Missing statsd configuration");
+            Statsd.createInstance(config.getProperty("statsd.prefix"), config.getProperty("statsd.host"), Integer.parseInt(config.getProperty("statsd.port")),
+                    Integer.parseInt(config.getProperty("statsd.flushMS", "1000")));
+            this.statsd = Statsd.getInstance();
+        }
     }
 
 
@@ -117,12 +121,16 @@ public class BasicEventDriver implements EventDriver {
         }
         ((LongColumnVector) columns.get("date")).vector[batchPosition] = LocalDate.parse(date).toEpochDay();
         columns.get("date").isNull[batchPosition] = false;
-        statsd.count("message.count", 1, new String[]{"env:"+ statsdEnv});
+        if (statsdEnabled) {
+            statsd.count("message.count", 1, new String[]{"env:"+ statsdEnv});
+        }
         if (batch.size == batch.getMaxSize()) {
             write();
         }
-        statsd.histogram("eventDriver.addMessage.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+statsdEnv});
+        if (statsdEnabled) {
+            statsd.histogram("eventDriver.addMessage.ms", Instant.now().toEpochMilli() - t,
+                    new String[] {"env:"+statsdEnv});
+        }
     }
 
     @Override
@@ -150,8 +158,10 @@ public class BasicEventDriver implements EventDriver {
                 System.out.println("Error closing orc file: " + e);
             }
         }
-        statsd.histogram("eventDriver.flush.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+statsdEnv});
+        if (statsdEnabled) {
+            statsd.histogram("eventDriver.flush.ms", Instant.now().toEpochMilli() - t,
+                    new String[] {"env:"+statsdEnv});
+        }
         return writtenFileName;
     }
 
@@ -172,8 +182,10 @@ public class BasicEventDriver implements EventDriver {
             e.printStackTrace();
         }
 
-        statsd.histogram("eventDriver.write.ms", Instant.now().toEpochMilli() - t,
-                new String[] {"env:"+statsdEnv});
+        if (statsdEnabled) {
+            statsd.histogram("eventDriver.write.ms", Instant.now().toEpochMilli() - t,
+                    new String[] {"env:"+statsdEnv});
+        }
     }
 
     private void nullColumns() {
@@ -268,4 +280,5 @@ public class BasicEventDriver implements EventDriver {
     StatsDClient statsd;
     StorageDriver storageDriver;
     ColumnVector[] columnVectors;
+    boolean statsdEnabled;
 }
