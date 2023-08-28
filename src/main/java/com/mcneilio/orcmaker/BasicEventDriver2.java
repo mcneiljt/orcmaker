@@ -1,9 +1,9 @@
 package com.mcneilio.orcmaker;
 
 import com.mcneilio.orcmaker.columns.ColumnInitializer;
+import com.mcneilio.orcmaker.metrics.MetricsClient;
 import com.mcneilio.orcmaker.orcer.Orcer;
 import com.mcneilio.orcmaker.storage.StorageDriver;
-import com.timgroup.statsd.StatsDClient;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.ColumnVector;
@@ -25,6 +25,9 @@ import java.util.UUID;
 
 
 public class BasicEventDriver2 implements EventDriver {
+
+  private final MetricsClient metrics;
+
   Orcer[] orcers;
 
   String[] colNames;
@@ -37,22 +40,21 @@ public class BasicEventDriver2 implements EventDriver {
   String statsdEnv;
   Configuration conf = new Configuration();
   Writer writer = null;
-  StatsDClient statsd;
   StorageDriver storageDriver;
   ColumnVector[] columnVectors;
 
 
-  public BasicEventDriver2(Properties config, TypeDescription typeDescription, StorageDriver storageDriver, StatsDClient statsd) {
+  public BasicEventDriver2(Properties config, TypeDescription typeDescription, StorageDriver storageDriver) {
     this.eventName = config.getProperty("event.name");
     this.eventDate = config.getProperty("event.date");
 
     this.schema = typeDescription;
     this.storageDriver = storageDriver;
-    this.statsd = statsd;
+    this.metrics = new MetricsClient(config);
 
     this.batch = this.schema.createRowBatch(
       Integer.parseInt(
-        config.getProperty("orcBatchSize", "1024")
+        config.getProperty("orcBatchSize", "1024") // should set in config props file or elsewhere, but not here
       )
     );
 
@@ -70,25 +72,28 @@ public class BasicEventDriver2 implements EventDriver {
     long t = Instant.now().toEpochMilli();
     int batchPosition = batch.size++;
 
-    for(int colId =0;colId<colNames.length;colId++){
+    for (int colId =0; colId<colNames.length; colId++){
       String key=colNames[colId];
 
-      if(!message.has(key)) {
+      if (!message.has(key)) {
         continue;
       }
       Object value = message.get(key);
 
-      if(orcers[colId]!=null){
+      if (orcers[colId] != null){
         orcers[colId].addObject(columnVectors[colId], batchPosition, value);
       }
     }
+
     ((LongColumnVector) columns.get("date")).vector[batchPosition] = LocalDate.parse(eventDate).toEpochDay(); // should date be mandatory? can it be configurable?
     columns.get("date").isNull[batchPosition] = false;
-//    statsd.count("message.count", 1, "env:"+ statsdEnv);
+    this.metrics.sendCount("message.count", 1, "env:"+ statsdEnv);
+
     if (batch.size == batch.getMaxSize()) {
       write();
     }
-//    statsd.histogram("eventDriver.addMessage.ms", Instant.now().toEpochMilli() - t, "env:"+statsdEnv);
+
+    this.metrics.sendHistogram("eventDriver.addMessage.ms", Instant.now().toEpochMilli() - t, "env:"+statsdEnv);
   }
 
   @Override
@@ -116,7 +121,7 @@ public class BasicEventDriver2 implements EventDriver {
         System.out.println("Error closing orc file: " + e);
       }
     }
-    statsd.histogram("eventDriver.flush.ms", Instant.now().toEpochMilli() - t,
+    this.metrics.sendHistogram("eventDriver.flush.ms", Instant.now().toEpochMilli() - t,
       "env:"+statsdEnv);
     return writtenFileName;
   }
@@ -138,7 +143,7 @@ public class BasicEventDriver2 implements EventDriver {
       e.printStackTrace();
     }
 
-    statsd.histogram("eventDriver.write.ms", Instant.now().toEpochMilli() - t,
+    this.metrics.sendHistogram("eventDriver.write.ms", Instant.now().toEpochMilli() - t,
       "env:"+statsdEnv);
   }
 }

@@ -1,5 +1,8 @@
 package com.mcneilio.orcmaker;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.mcneilio.orcmaker.storage.LocalStorageDriver;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -9,9 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class BasicEventDriver2Test {
 
@@ -32,7 +32,7 @@ class BasicEventDriver2Test {
 
     LocalStorageDriver storageDriver = new LocalStorageDriver(config);
 
-    driver = new BasicEventDriver2(config, schema, storageDriver, null);
+    driver = new BasicEventDriver2(config, schema, storageDriver);
 
   }
 
