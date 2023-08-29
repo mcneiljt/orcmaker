@@ -56,7 +56,6 @@ public class BasicEventDriver implements EventDriver {
     public BasicEventDriver(Properties config, TypeDescription typeDescription) {
         this.eventName = config.getProperty("event.name");
         this.date = config.getProperty("event.date");
-        this.statsdEnv = config.getProperty("statsd.env");
 
         // Initialize storage driver
         String storageDriverType = config.getProperty("storage.driver");
@@ -75,6 +74,7 @@ public class BasicEventDriver implements EventDriver {
         this.statsdEnabled = config.getProperty("statsd.enabled", "true").equals("true");
         if(this.statsdEnabled) {
             // Initialize statsd
+            this.statsdEnv = config.getProperty("statsd.env");
             if (config.getProperty("statsd.prefix") == null || config.getProperty("statsd.host") == null || config.getProperty("statsd.port") == null)
                 throw new RuntimeException("Missing statsd configuration");
             Statsd.createInstance(config.getProperty("statsd.prefix"), config.getProperty("statsd.host"), Integer.parseInt(config.getProperty("statsd.port")),
@@ -102,6 +102,7 @@ public class BasicEventDriver implements EventDriver {
         this.statsdEnabled = config.getProperty("statsd.enabled", "true").equals("true");
         if(this.statsdEnabled) {
             // Initialize statsd
+            this.statsdEnv = config.getProperty("statsd.env");
             if (config.getProperty("statsd.prefix") == null || config.getProperty("statsd.host") == null || config.getProperty("statsd.port") == null)
                 throw new RuntimeException("Missing statsd configuration");
             Statsd.createInstance(config.getProperty("statsd.prefix"), config.getProperty("statsd.host"), Integer.parseInt(config.getProperty("statsd.port")),
