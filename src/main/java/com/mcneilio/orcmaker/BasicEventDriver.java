@@ -72,10 +72,6 @@ public class BasicEventDriver implements EventDriver {
         this.schema = typeDescription;
         this.batch = this.schema.createRowBatch(Integer.parseInt(config.getProperty("orcBatchSize", "1000")));
 
-        // Initialize columns
-        setColumns();
-        nullColumns();
-
         this.statsdEnabled = config.getProperty("statsd.enabled", "true").equals("true");
         if(this.statsdEnabled) {
             // Initialize statsd
@@ -85,6 +81,30 @@ public class BasicEventDriver implements EventDriver {
                     Integer.parseInt(config.getProperty("statsd.flushMS", "1000")));
             this.statsd = Statsd.getInstance();
         }
+
+        // Initialize columns
+        setColumns();
+        nullColumns();
+    }
+
+    public BasicEventDriver(Properties config, TypeDescription schema, StorageDriver storageDriver, StatsDClient statsd) {
+        this.eventName = config.getProperty("event.name");
+        this.date = config.getProperty("event.date");
+        this.statsdEnv = config.getProperty("statsd.env");
+
+        // Initialize storage driver
+        this.storageDriver = storageDriver;
+
+        // Initialize batch
+        this.schema = schema;
+        this.batch = this.schema.createRowBatch(Integer.parseInt(config.getProperty("orcBatchSize", "1000")));
+
+        this.statsd = statsd;
+        this.statsdEnabled = true;
+
+        // Initialize columns
+        setColumns();
+        nullColumns();
     }
 
 
