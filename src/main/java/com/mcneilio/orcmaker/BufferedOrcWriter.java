@@ -47,7 +47,15 @@ public class BufferedOrcWriter {
      * @param message The message to write
      */
     public void write(String message) {
-        buffer.add(JsonParser.parseString(message));
+        JsonElement element;
+        try {
+            element = JsonParser.parseString(message);
+            buffer.add(element);
+        } catch (Exception e) {
+            System.out.println("Invalid JSON; continuing to avoid data loss.");
+            e.printStackTrace();
+        }
+
     }
 
     /**
