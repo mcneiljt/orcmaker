@@ -5,7 +5,6 @@ import org.apache.orc.TypeDescription;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.Date;
 
 class BufferedOrcWriterTest {
     @Test
