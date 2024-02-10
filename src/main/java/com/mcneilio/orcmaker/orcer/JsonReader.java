@@ -367,6 +367,21 @@ public class JsonReader {
         }
     }
 
+    public JsonReader(Iterator<JsonElement> parser,
+                      TypeDescription schema, DateTimeFormatter dateTimeFormatter) {
+        this.schema = schema;
+        if (schema.getCategory() != TypeDescription.Category.STRUCT) {
+            throw new IllegalArgumentException("Root must be struct - " + schema);
+        }
+        this.parser = parser;
+        this.dateTimeFormatter = dateTimeFormatter;
+        List<TypeDescription> fieldTypes = schema.getChildren();
+        converters = new JsonConverter[fieldTypes.size()];
+        for(int c = 0; c < converters.length; ++c) {
+            converters[c] = createConverter(fieldTypes.get(c));
+        }
+    }
+
     public boolean nextBatch(VectorizedRowBatch batch) {
         batch.reset();
         int maxSize = batch.getMaxSize();

@@ -1,6 +1,7 @@
 package com.mcneilio.orcmaker;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -21,6 +22,24 @@ public class BufferedOrcWriter {
         this.schema = schema;
         this.batch = schema.createRowBatch();
         this.path = path;
+        this.writerConfiguration = new Configuration();
+        this.dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+    }
+
+    public BufferedOrcWriter(TypeDescription schema, Path path, Configuration writerConfiguration) {
+        this.schema = schema;
+        this.batch = schema.createRowBatch();
+        this.path = path;
+        this.writerConfiguration = writerConfiguration;
+        this.dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+    }
+
+    public BufferedOrcWriter(TypeDescription schema, Path path, Configuration writerConfiguration, DateTimeFormatter dateTimeFormatter) {
+        this.schema = schema;
+        this.batch = schema.createRowBatch();
+        this.path = path;
+        this.writerConfiguration = writerConfiguration;
+        this.dateTimeFormatter = dateTimeFormatter;
     }
 
     /**
@@ -35,10 +54,10 @@ public class BufferedOrcWriter {
      * Flush the buffer to the storage driver
      */
     public void flush() throws IOException {
-        OrcFile.WriterOptions writerOpts = OrcFile.writerOptions(new Configuration())
+        OrcFile.WriterOptions writerOpts = OrcFile.writerOptions(writerConfiguration)
                 .setSchema(schema);
         Writer writer = OrcFile.createWriter(path, writerOpts);
-        JsonReader reader = new JsonReader(buffer.iterator(), schema);
+        JsonReader reader = new JsonReader(buffer.iterator(), schema, dateTimeFormatter);
         while (reader.nextBatch(batch)) {
             writer.addRowBatch(batch);
         }
@@ -49,4 +68,6 @@ public class BufferedOrcWriter {
     TypeDescription schema;
     VectorizedRowBatch batch;
     Path path;
+    Configuration writerConfiguration;
+    DateTimeFormatter dateTimeFormatter;
 }
