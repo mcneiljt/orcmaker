@@ -105,6 +105,9 @@ dependencies {
     implementation 'com.datadoghq:java-dogstatsd-client:4.0.0'
     implementation platform('software.amazon.awssdk:bom:2.20.56')
     implementation 'software.amazon.awssdk:s3'
+    implementation 'com.google.code.gson:gson'
+    implementation 'org.apache.hive:hive-serde'
+    implementation 'org.apache.hive:hive-common'
 }
 
 artifacts {
