@@ -26,6 +26,15 @@ public class BufferedOrcWriter {
         this.dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
     }
 
+    public BufferedOrcWriter(TypeDescription schema, Path path, boolean allowStringify) {
+        this.schema = schema;
+        this.batch = schema.createRowBatch();
+        this.path = path;
+        this.writerConfiguration = new Configuration();
+        this.dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+        this.allowStringify = allowStringify;
+    }
+
     public BufferedOrcWriter(TypeDescription schema, Path path, Configuration writerConfiguration) {
         this.schema = schema;
         this.batch = schema.createRowBatch();
@@ -65,7 +74,7 @@ public class BufferedOrcWriter {
         OrcFile.WriterOptions writerOpts = OrcFile.writerOptions(writerConfiguration)
                 .setSchema(schema);
         Writer writer = OrcFile.createWriter(path, writerOpts);
-        JsonReader reader = new JsonReader(buffer.iterator(), schema, dateTimeFormatter);
+        JsonReader reader = new JsonReader(buffer.iterator(), schema, dateTimeFormatter, allowStringify);
         while (reader.nextBatch(batch)) {
             writer.addRowBatch(batch);
         }
@@ -78,4 +87,5 @@ public class BufferedOrcWriter {
     Path path;
     Configuration writerConfiguration;
     DateTimeFormatter dateTimeFormatter;
+    boolean allowStringify = false;
 }

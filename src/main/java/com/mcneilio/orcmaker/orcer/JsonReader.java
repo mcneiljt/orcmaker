@@ -58,6 +58,8 @@ public class JsonReader {
     private final JsonConverter[] converters;
     private final DateTimeFormatter dateTimeFormatter;
 
+    private static boolean allowStringify = false;
+
     interface JsonConverter {
         void convert(JsonElement value, ColumnVector vect, int row);
     }
@@ -109,7 +111,12 @@ public class JsonReader {
                 vect.isNull[row] = true;
             } else {
                 BytesColumnVector vector = (BytesColumnVector) vect;
-                byte[] bytes = value.getAsString().getBytes(StandardCharsets.UTF_8);
+                byte[] bytes;
+                if(!value.isJsonPrimitive() && allowStringify) {
+                    bytes = value.toString().getBytes(StandardCharsets.UTF_8);
+                } else {
+                    bytes = value.getAsString().getBytes(StandardCharsets.UTF_8);
+                }
                 vector.setRef(row, bytes, 0, bytes.length);
             }
         }
@@ -368,13 +375,15 @@ public class JsonReader {
     }
 
     public JsonReader(Iterator<JsonElement> parser,
-                      TypeDescription schema, DateTimeFormatter dateTimeFormatter) {
+                      TypeDescription schema, DateTimeFormatter dateTimeFormatter, boolean allowStringify) {
+        this.allowStringify = allowStringify;
         this.schema = schema;
         if (schema.getCategory() != TypeDescription.Category.STRUCT) {
             throw new IllegalArgumentException("Root must be struct - " + schema);
         }
         this.parser = parser;
         this.dateTimeFormatter = dateTimeFormatter;
+
         List<TypeDescription> fieldTypes = schema.getChildren();
         converters = new JsonConverter[fieldTypes.size()];
         for(int c = 0; c < converters.length; ++c) {
