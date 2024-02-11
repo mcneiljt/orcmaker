@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mcneilio.orcmaker.orcer;
+package com.mcneilio.orcmaker;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -52,7 +52,7 @@ import java.util.Map;
 /**
  * Modified org.apache.orc.tools.convert.JsonReader to no longer require a file path
  */
-public class JsonReader {
+public class JsonOrcer {
     private final TypeDescription schema;
     private final Iterator<JsonElement> parser;
     private final JsonConverter[] converters;
@@ -359,8 +359,8 @@ public class JsonReader {
         }
     }
 
-    public JsonReader(Iterator<JsonElement> parser,
-                      TypeDescription schema) {
+    public JsonOrcer(Iterator<JsonElement> parser,
+                     TypeDescription schema) {
         this.schema = schema;
         if (schema.getCategory() != TypeDescription.Category.STRUCT) {
             throw new IllegalArgumentException("Root must be struct - " + schema);
@@ -374,8 +374,8 @@ public class JsonReader {
         }
     }
 
-    public JsonReader(Iterator<JsonElement> parser,
-                      TypeDescription schema, DateTimeFormatter dateTimeFormatter, boolean allowStringify) {
+    public JsonOrcer(Iterator<JsonElement> parser,
+                     TypeDescription schema, DateTimeFormatter dateTimeFormatter, boolean allowStringify) {
         this.allowStringify = allowStringify;
         this.schema = schema;
         if (schema.getCategory() != TypeDescription.Category.STRUCT) {

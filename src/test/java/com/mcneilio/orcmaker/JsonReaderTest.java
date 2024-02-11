@@ -1,8 +1,9 @@
-package com.mcneilio.orcmaker.orcer;
+package com.mcneilio.orcmaker;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.mcneilio.orcmaker.JsonOrcer;
 import org.apache.hadoop.hive.ql.exec.vector.*;
 import org.apache.orc.TypeDescription;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,7 @@ import java.util.Iterator;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JsonReaderTest {
-    private JsonReader jsonReader;
+    private JsonOrcer jsonReader;
     private TypeDescription schema;
 
     @BeforeEach
@@ -22,7 +23,7 @@ public class JsonReaderTest {
         String json = "[{\"x\": 1, \"y\": 2, \"z\": 2.5, \"a\": \"test\", \"b\": true, \"c\": \"2022-01-01\", \"d\": \"2022-01-01T00:00:00Z\"}]";
         JsonArray jsonArray = JsonParser.parseString(json).getAsJsonArray();
         Iterator<JsonElement> iterator = jsonArray.iterator();
-        jsonReader = new JsonReader(iterator, schema);
+        jsonReader = new JsonOrcer(iterator, schema);
     }
 
     @Test
